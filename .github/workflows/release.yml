@@ -42,25 +42,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" --generate-notes dist/*.zip
 
-      - name: Sign on addons.mozilla.org
+      - name: Submit to addons.mozilla.org
         if: env.AMO_JWT_ISSUER != ''
         run: |
+          # Listed versions wait days for review, so submit without waiting for approval.
           bunx --bun web-ext sign \
             --source-dir . \
             --ignore-files amo-metadata.json 'amo/**' 'dist/**' \
-            --artifacts-dir dist/amo \
-            --channel "${{ vars.AMO_CHANNEL || 'listed' }}" \
+            --channel listed \
+            --approval-timeout 0 \
             --amo-metadata amo-metadata.json \
             --api-key "$AMO_JWT_ISSUER" \
             --api-secret "$AMO_JWT_SECRET"
-
-      - name: Attach the signed add-on to the release
-        if: env.AMO_JWT_ISSUER != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # The listed channel submits for review instead of returning a file.
-          shopt -s nullglob
-          for xpi in dist/amo/*.xpi; do
-            gh release upload "$GITHUB_REF_NAME" "$xpi"
-          done
