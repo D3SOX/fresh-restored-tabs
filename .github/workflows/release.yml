@@ -1,0 +1,66 @@
+name: Release
+
+# Tag a commit with the manifest version to publish it, e.g. `git tag v1.0.0 && git push --tags`.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      # The AMO steps are skipped until these secrets exist.
+      AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+      AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      - name: Check the tag matches the manifest version
+        run: |
+          version=$(jq -r .version manifest.json)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match manifest version $version"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Lint extension
+        run: bunx --bun web-ext lint --source-dir . --warnings-as-errors
+
+      - name: Build package
+        run: |
+          mkdir -p dist
+          zip -r "dist/fresh-restored-tabs-$VERSION.zip" manifest.json background.js icons LICENSE README.md
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes dist/*.zip
+
+      - name: Sign on addons.mozilla.org
+        if: env.AMO_JWT_ISSUER != ''
+        run: |
+          bunx --bun web-ext sign \
+            --source-dir . \
+            --ignore-files amo-metadata.json 'dist/**' \
+            --artifacts-dir dist/amo \
+            --channel "${{ vars.AMO_CHANNEL || 'listed' }}" \
+            --amo-metadata amo-metadata.json \
+            --api-key "$AMO_JWT_ISSUER" \
+            --api-secret "$AMO_JWT_SECRET"
+
+      - name: Attach the signed add-on to the release
+        if: env.AMO_JWT_ISSUER != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The listed channel submits for review instead of returning a file.
+          shopt -s nullglob
+          for xpi in dist/amo/*.xpi; do
+            gh release upload "$GITHUB_REF_NAME" "$xpi"
+          done

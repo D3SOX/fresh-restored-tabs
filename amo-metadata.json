@@ -1,0 +1,7 @@
+{
+  "categories": ["tabs"],
+  "summary": { "en-US": "Reloads unloaded tabs when you open them so they show current content instead of a stale cached copy." },
+  "homepage": { "en-US": "https://github.com/D3SOX/fresh-restored-tabs" },
+  "support_url": { "en-US": "https://github.com/D3SOX/fresh-restored-tabs/issues" },
+  "version": { "license": "MPL-2.0" }
+}
