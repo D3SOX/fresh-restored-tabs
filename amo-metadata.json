@@ -1,7 +1,14 @@
 {
   "categories": ["tabs"],
   "summary": { "en-US": "Reloads unloaded tabs when you open them so they show current content instead of a stale cached copy." },
+  "description": {
+    "en-US": "When you open an unloaded tab, Firefox shows the copy of the page it cached earlier instead of the current one. A Reddit inbox misses new replies and a GitHub pull request misses new comments until you reload the tab yourself.\n\nFresh Restored Tabs reloads the tab once its first load finishes. A normal reload checks with the server, so the page shows current content. This works for tabs left unloaded after a restart, tabs you unload yourself, and tabs Firefox unloads when memory is low.\n\nThe extension needs no permissions. It cannot read page contents and does not collect or transmit data."
+  },
   "homepage": { "en-US": "https://github.com/D3SOX/fresh-restored-tabs" },
   "support_url": { "en-US": "https://github.com/D3SOX/fresh-restored-tabs/issues" },
-  "version": { "license": "MPL-2.0" }
+  "support_email": { "en-US": "fresh-restored-tabs@d3sox.me" },
+  "version": {
+    "license": "MPL-2.0",
+    "approval_notes": "There is no build step. The submitted JavaScript is the original readable source, with no generated, minified, or third-party code.\n\nTesting:\n\n1. Open a page whose content changes between visits, such as a GitHub issue you can comment on.\n2. Open another tab, then right-click the first tab and select Unload Tab.\n3. Change the page from somewhere else, for example by adding a comment.\n4. Click the unloaded tab.\n\nExpected result: the tab shows the cached copy for a moment, reloads once, and then shows the current content. Without the extension, the tab keeps showing the cached copy until you reload it.\n\nThe extension listens to tabs.onUpdated for the discarded and status properties. When a tab stops being discarded, it calls tabs.reload once after that load completes. It requests no permissions, does not access page contents, and does not collect or transmit data. No account is required."
+  }
 }

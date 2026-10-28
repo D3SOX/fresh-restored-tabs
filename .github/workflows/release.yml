@@ -47,7 +47,7 @@ jobs:
         run: |
           bunx --bun web-ext sign \
             --source-dir . \
-            --ignore-files amo-metadata.json 'dist/**' \
+            --ignore-files amo-metadata.json 'amo/**' 'dist/**' \
             --artifacts-dir dist/amo \
             --channel "${{ vars.AMO_CHANNEL || 'listed' }}" \
             --amo-metadata amo-metadata.json \
